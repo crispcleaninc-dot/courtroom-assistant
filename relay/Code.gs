@@ -1,6 +1,6 @@
 /**
  * Courtroom Assistant Relay (Google Apps Script)
- * Runs in Ciarne's crispcleaninc@gmail.com account.
+ * Runs in the owner's own Google account.
  *
  * What it does:
  *   - Keeps the Anthropic API key private (the phone app never sees it).
