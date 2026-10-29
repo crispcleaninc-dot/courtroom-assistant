@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://script.google.com https://script.googleusercontent.com; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<title>Courtroom Assistant</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#1B2951">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#1B2951; --gold:#C9A961; --cream:#FAF7F0; --ink:#14161c; --muted:#5a5f6e;
+  --line:#e3dccb; --red:#a3271f; --redbg:#fbeceb; --amber:#8a5a00; --amberbg:#fdf3dc;
+  --green:#1f6b3a; --greenbg:#e6f3ea; --blue:#1d4f91; --bluebg:#e8eef8;
+  --fs:18px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--cream);color:var(--ink);font-family:Inter,system-ui,sans-serif;font-size:var(--fs);line-height:1.45}
+header{background:var(--navy);color:#fff;padding:12px 14px 0;position:sticky;top:0;z-index:20}
+.brand{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.brand h1{font-family:Cinzel,serif;font-size:1.05em;margin:0;letter-spacing:.04em;color:var(--gold)}
+.brand small{display:block;color:#cfd5e6;font-family:Inter;font-size:.68em;letter-spacing:0}
+.sizer button{background:transparent;color:#fff;border:1px solid #5b6a94;border-radius:8px;padding:4px 10px;font-size:.85em;margin-left:4px}
+select#caseSel{width:100%;margin:10px 0 8px;font-size:.9em;padding:9px;border-radius:10px;border:0;background:#fff;color:var(--ink);font-weight:600}
+nav{display:flex;gap:2px}
+nav button{flex:1;background:transparent;border:0;color:#cfd5e6;padding:10px 4px 12px;font-size:.85em;font-weight:600;border-bottom:3px solid transparent}
+nav button.on{color:#fff;border-bottom-color:var(--gold)}
+main{padding:14px;max-width:900px;margin:0 auto 90px}
+section.view{display:none} section.view.on{display:block}
+h2{font-family:Cinzel,serif;color:var(--navy);font-size:1.05em;margin:18px 0 8px}
+h3{font-size:.95em;margin:14px 0 6px;color:var(--navy)}
+.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin:10px 0}
+.muted{color:var(--muted);font-size:.85em}
+.pill{display:inline-block;font-size:.7em;font-weight:700;padding:2px 8px;border-radius:99px;margin-right:4px;vertical-align:middle}
+.p-ok{background:var(--greenbg);color:var(--green)} .p-warn{background:var(--amberbg);color:var(--amber)} .p-bad{background:var(--redbg);color:var(--red)} .p-info{background:var(--bluebg);color:var(--blue)}
+.say{background:var(--navy);color:#fff;border-radius:12px;padding:12px 14px;font-size:1.08em;font-weight:600;margin:8px 0;line-height:1.4}
+.say::before{content:"SAY:";display:block;color:var(--gold);font-size:.62em;letter-spacing:.12em;margin-bottom:4px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.tap{background:#fff;border:2px solid var(--navy);color:var(--navy);border-radius:14px;padding:14px 8px;font-weight:700;font-size:.92em;min-height:64px;text-align:center}
+.tap.case{border-color:var(--gold);background:#fffaf0}
+.tap.alert{border-color:var(--red);color:var(--red)}
+.tap:active{transform:scale(.97)}
+.btn{background:var(--navy);color:#fff;border:0;border-radius:12px;padding:12px 16px;font-weight:700;font-size:.92em}
+.btn.gold{background:var(--gold);color:var(--navy)} .btn.red{background:var(--red)} .btn.ghost{background:#fff;color:var(--navy);border:2px solid var(--navy)}
+.btn:disabled{opacity:.4}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+textarea,input[type=text],input[type=date],select.f{width:100%;font-size:.95em;padding:10px;border:1px solid #cbc3ae;border-radius:10px;font-family:inherit;background:#fff}
+textarea{min-height:90px}
+label.f{display:block;font-weight:600;font-size:.85em;margin:10px 0 4px}
+.chk{display:flex;gap:10px;align-items:flex-start;margin:8px 0;font-size:.9em}
+.chk input{width:22px;height:22px;flex:none;margin-top:2px}
+#sheet{position:fixed;inset:0;background:rgba(10,14,30,.55);display:none;z-index:50;align-items:flex-end;justify-content:center}
+#sheet.on{display:flex}
+#sheetBody{background:var(--cream);width:100%;max-width:760px;max-height:88vh;overflow:auto;border-radius:18px 18px 0 0;padding:16px 16px 28px}
+.close{float:right;background:#fff;border:1px solid var(--line);border-radius:10px;padding:6px 12px;font-weight:700}
+.sug{border-left:6px solid var(--navy)}
+.sug.now{border-left-color:var(--red)} .sug.ask{border-left-color:var(--blue)} .sug.later{border-left-color:var(--amber)} .sug.hold{border-left-color:#888}
+#transcript{min-height:150px}
+.logline{font-size:.82em;border-bottom:1px solid var(--line);padding:6px 0}
+.logline b{color:var(--navy)}
+.banner{border-radius:12px;padding:10px 12px;font-size:.85em;margin:8px 0}
+.banner.red{background:var(--redbg);color:var(--red)} .banner.amber{background:var(--amberbg);color:var(--amber)} .banner.green{background:var(--greenbg);color:var(--green)}
+.status{position:fixed;bottom:0;left:0;right:0;background:var(--navy);color:#fff;font-size:.75em;padding:8px 14px;display:flex;justify-content:space-between;z-index:15}
+.status b{color:var(--gold)}
+ul.tight{margin:4px 0;padding-left:20px} ul.tight li{margin:3px 0}
+details summary{cursor:pointer;font-weight:700;color:var(--navy)}
+.src{font-size:.75em;color:var(--muted)}
+.big-stop{width:100%;font-size:1.05em;padding:16px}
+#stratBar{display:none;background:#fffaf0;border:2px solid var(--gold);border-radius:14px;padding:10px 12px;margin:0 0 10px}
+#stratBar.on{display:block}
+#stratBar .lab{font-size:.68em;letter-spacing:.12em;color:var(--amber);font-weight:700}
+#stratBar .plan{font-weight:700;color:var(--navy)}
+#stratBar .next{margin-top:4px}
+.shift{background:var(--gold);color:var(--navy);border-radius:12px;padding:10px 12px;margin:8px 0;font-weight:600}
+.plancard textarea{min-height:60px;font-size:.85em}
+.plancard.cur{border:2px solid var(--gold)}
+#toast{position:fixed;left:10px;right:10px;bottom:42px;z-index:40;display:none;background:var(--gold);color:var(--navy);border-radius:14px;padding:12px 14px;font-weight:700;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+#toast.on{display:block}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <div><h1>Courtroom Assistant</h1><small id="whoLine">Pro se. Assistive technology, not counsel.</small></div>
+    <div class="sizer"><button id="aMinus" aria-label="Smaller text">A−</button><button id="aPlus" aria-label="Larger text">A+</button></div>
+  </div>
+  <select id="caseSel" aria-label="Choose case"></select>
+  <nav>
+    <button data-v="prep" class="on">Prep</button>
+    <button data-v="silent">Silent</button>
+    <button data-v="live">Live</button>
+    <button data-v="log">Log</button>
+    <button data-v="setup">Setup</button>
+  </nav>
+</header>
+
+<main>
+<div id="stratBar"></div>
+<!-- ============ PREP ============ -->
+<section class="view on" id="v-prep">
+  <div id="prepHead"></div>
+  <h2>Hearing strategy</h2>
+  <p class="muted">Set your plans before the hearing. In court, the app watches what is said and what you tap, and switches plans on its own when something changes. A gold banner tells you why, with one tap to undo.</p>
+  <div class="card">
+    <label class="f" for="discNotes">Discovery and new information for this hearing</label>
+    <textarea id="discNotes" placeholder="What you got in discovery, what the other side filed, what you expect them to argue, what the judge ruled last time."></textarea>
+    <div class="row" style="margin-top:8px"><button class="btn" id="stratBuild">Build my strategy with AI</button><button class="btn ghost" id="stratReset">Reset to starter plans</button><span id="stratStatus" class="muted"></span></div>
+  </div>
+  <div id="stratPlans"></div>
+  <h2>Call-outs for this case</h2>
+  <p class="muted">These are the points to raise, with the words to use and what backs them up. Anything marked <span class="pill p-warn">Verify</span> must be checked against the official rule before you rely on it.</p>
+  <div id="prepCallouts"></div>
+  <h2>Key facts and where they come from</h2>
+  <div id="prepFacts"></div>
+  <h2>Deadlines and open items</h2>
+  <div id="prepDeadlines"></div>
+  <h2>Courtroom scripts</h2>
+  <div id="prepScripts"></div>
+  <h2>Getting live mode approved (MC 70)</h2>
+  <div class="card" id="mc70"></div>
+  <h2>AI hearing outline</h2>
+  <div class="card">
+    <label class="f" for="hearPurpose">What is the hearing for?</label>
+    <input type="text" id="hearPurpose" placeholder="e.g., landlord asking for order of eviction; my motion for relief from judgment">
+    <label class="f" for="hearDate">Hearing date</label>
+    <input type="date" id="hearDate">
+    <div class="row" style="margin-top:10px"><button class="btn" id="genOutline">Build my outline</button><span id="outlineStatus" class="muted"></span></div>
+    <div id="outlineOut"></div>
+  </div>
+  <h2>My notes for this case</h2>
+  <div class="card">
+    <textarea id="caseNotes" placeholder="Anything new since these notes were written: new filings, new dates, what the judge said last time."></textarea>
+    <div class="muted" id="notesSaved"></div>
+  </div>
+</section>
+
+<!-- ============ SILENT ============ -->
+<section class="view" id="v-silent">
+  <div class="banner green">Silent mode records nothing. You listen, tap what you hear, and read the words to say. Note-taking and looking things up on a device are allowed under MCR 8.115 unless your judge orders otherwise.</div>
+  <h2>Objections (tap one)</h2>
+  <div class="grid" id="objGrid"></div>
+  <h2>This case: call these out</h2>
+  <div class="grid" id="caseGrid"></div>
+  <h2>Procedure buttons</h2>
+  <div class="grid" id="procGrid"></div>
+  <h2>Type what was just said</h2>
+  <div class="card">
+    <textarea id="silentText" placeholder="Short note of what the other side or a witness just said. The app will match it against your case."></textarea>
+    <div class="row" style="margin-top:8px">
+      <button class="btn" id="silentMatch">Match to my case</button>
+      <button class="btn gold" id="silentAI">Ask AI what to do</button>
+      <button class="btn ghost" id="silentFlag">Flag for later</button>
+    </div>
+    <div id="silentOut"></div>
+  </div>
+</section>
+
+<!-- ============ LIVE ============ -->
+<section class="view" id="v-live">
+  <div id="permGate">
+    <div class="banner red"><b>Locked until you have permission.</b> Live mode turns spoken words into text, and Chrome sends audio to its speech service to do that. In Michigan courts, recording needs the presiding judge's approval, and federal court (including bankruptcy court) is stricter. Use this only with a granted MC 70 accommodation, a written order, or permission the judge gave on the record.</div>
+    <div class="card">
+      <h3>Permission record for this hearing</h3>
+      <label class="f" for="pCourt">Court and courtroom</label><input type="text" id="pCourt">
+      <label class="f" for="pJudge">Judge</label><input type="text" id="pJudge">
+      <label class="f" for="pDate">Hearing date</label><input type="date" id="pDate">
+      <label class="f" for="pType">How permission was given</label>
+      <select class="f" id="pType">
+        <option value="">Choose one</option>
+        <option>MC 70 accommodation granted by the ADA coordinator</option>
+        <option>Written order from the judge</option>
+        <option>Judge's permission stated on the record today</option>
+      </select>
+      <label class="f" for="pRef">Proof (date, order number, or coordinator's name)</label><input type="text" id="pRef">
+      <div class="chk"><input type="checkbox" id="pScope"><label for="pScope">The permission covers turning speech into text, including a cloud speech service.</label></div>
+      <div class="chk"><input type="checkbox" id="pStop"><label for="pStop">I will stop the moment the judge tells me to, and I will not save or share any audio.</label></div>
+      <button class="btn" id="pSave" disabled>Unlock live mode for this hearing</button>
+      <div id="pMsg" class="muted"></div>
+    </div>
+  </div>
+
+  <div id="liveArea" style="display:none">
+    <div class="banner green" id="permBanner"></div>
+    <button class="btn red big-stop" id="judgeStop">JUDGE SAID STOP: shut off now</button>
+    <h2>Live transcript</h2>
+    <div class="card">
+      <p class="muted" id="micHelp">Tap in the box, then tap the microphone on your phone's keyboard (voice typing). Keep the phone silent. The app checks each new sentence against your case.</p>
+      <div class="row" style="margin-bottom:8px"><button class="btn ghost" id="micBtn" style="display:none">Start in-page listening</button><span id="micState" class="muted"></span></div>
+      <textarea id="transcript" placeholder="Words appear here as people speak..."></textarea>
+      <div class="row" style="margin-top:8px">
+        <label class="chk" style="margin:0"><input type="checkbox" id="aiAuto" checked> AI suggestions</label>
+        <button class="btn ghost" id="liveClear">Clear</button>
+        <span class="muted" id="liveStatus"></span>
+      </div>
+    </div>
+    <h2>Suggestions</h2>
+    <p class="muted">Newest on top. Red = speak now, blue = ask on your turn, amber = save for later, gray = don't interrupt.</p>
+    <div id="liveSug"></div>
+  </div>
+</section>
+
+<!-- ============ LOG ============ -->
+<section class="view" id="v-log">
+  <h2>Hearing log</h2>
+  <p class="muted">Every tap, flag, and suggestion is saved with the time, so you can write your post-hearing motion or appeal notes from it. Order the official transcript from the court for anything you plan to file.</p>
+  <div class="row"><button class="btn" id="logCopy">Copy log</button><button class="btn ghost" id="logClear">Clear this case's log</button><span id="logMsg" class="muted"></span></div>
+  <div class="card" id="logList"></div>
+  <h2>After the hearing</h2>
+  <div class="card" id="postHearing"></div>
+  <h2>About this app</h2>
+  <div class="card muted" id="about"></div>
+</section>
+
+<!-- ============ SETUP ============ -->
+<section class="view" id="v-setup">
+  <h2>Connect your private relay</h2>
+  <div class="card">
+    <p class="muted">Your case files and AI key live in your own Google account, not in this app or on GitHub. Enter your relay address and passcode once on each device.</p>
+    <label class="f" for="relayUrl">Relay web app URL</label><input type="text" id="relayUrl" placeholder="https://script.google.com/macros/s/.../exec" autocomplete="off">
+    <label class="f" for="myName">Your name (used in scripts; stays private)</label><input type="text" id="myName" autocomplete="name">
+    <label class="f" for="myNeeds">Disability or access needs the AI should know (optional, private)</label><input type="text" id="myNeeds" placeholder="e.g., a visual and cognitive disability">
+    <label class="f" for="relayPass">Passcode</label><input type="text" id="relayPass" autocomplete="off" style="-webkit-text-security:disc">
+    <div class="row" style="margin-top:10px"><button class="btn" id="relaySave">Save and test</button><button class="btn ghost" id="relayPull">Load my cases now</button><span id="relayMsg" class="muted"></span></div>
+  </div>
+  <h2>Protect this device</h2>
+  <div class="card">
+    <p class="muted">Locks the app with a PIN and encrypts everything stored on this phone or computer (cases, notes, logs, relay passcode). It locks itself after 15 minutes without use.</p>
+    <div id="pinState" class="muted"></div>
+    <label class="f" for="pinNew">New PIN (6 or more digits)</label><input type="password" id="pinNew" inputmode="numeric" autocomplete="new-password">
+    <div class="row" style="margin-top:8px"><button class="btn" id="pinSet">Turn on PIN lock</button><button class="btn ghost" id="pinLockNow">Lock now</button><button class="btn ghost" id="pinOff">Turn off PIN lock</button></div>
+    <div id="pinMsg" class="muted"></div>
+  </div>
+  <h2>Status</h2>
+  <div class="card" id="setupStatus"></div>
+  <h2>Case data</h2>
+  <div class="card">
+    <p class="muted">Advanced: the full case data (call-outs, facts, deadlines, starter plans). Edit carefully; it is checked before saving, and the relay keeps the previous version as a backup.</p>
+    <div class="row"><button class="btn ghost" id="dataShow">Show case data</button><button class="btn" id="dataSave" style="display:none">Check and save</button><button class="btn ghost" id="dataCopy">Copy all my data</button></div>
+    <textarea id="dataBox" style="display:none;min-height:320px;font-family:monospace;font-size:.75em"></textarea>
+    <div id="dataMsg" class="muted"></div>
+  </div>
+</section>
+</main>
+
+<div class="status"><span id="stMode">Mode: <b>Prep</b></span><span id="stSync">Saved on this device</span></div>
+
+<div id="toast" role="status" aria-live="assertive"></div>
+<div id="lock" style="display:none;position:fixed;inset:0;z-index:100;background:var(--navy);color:#fff;align-items:center;justify-content:center;padding:24px">
+  <div style="max-width:360px;width:100%;text-align:center">
+    <h1 style="font-family:Cinzel,serif;color:var(--gold);font-size:1.3em">Courtroom Assistant</h1>
+    <p>Enter your PIN to unlock.</p>
+    <input type="password" id="lockPin" inputmode="numeric" autocomplete="off" style="font-size:1.4em;text-align:center;letter-spacing:.3em">
+    <button class="btn gold" id="lockGo" style="width:100%;margin-top:12px">Unlock</button>
+    <p id="lockMsg" style="color:#f3d6a3;font-size:.85em;min-height:1.2em"></p>
+    <p style="font-size:.75em;color:#cfd5e6">Forgot it? After 10 wrong tries this device's copy is erased. Your data is still safe in your Drive; set up the relay again to get it back.</p>
+  </div>
+</div>
+<div id="sheet" role="dialog" aria-modal="true"><div id="sheetBody"></div></div>
+
+<script>
+/* ================= DATA ================= */
+const V = { ok:'<span class="pill p-ok">Checked Oct 29 2026</span>', warn:'<span class="pill p-warn">Verify</span>' };
+
+// Objections: Michigan Rules of Evidence (amended eff. 1/1/2024, updated 1/28/2026). Federal court uses FRE with the same numbers for these, except leading = FRE 611(c).
+const OBJECTIONS = [
+ {id:'hearsay', label:'Hearsay', say:'Objection, Your Honor. Hearsay. The witness is repeating what someone else said, and it is offered for its truth.', rule:'MRE 801(c), 802', v:'warn', tip:'Only works if the out-of-court statement is offered to prove it is true. Statements by the other party itself (the landlord, the manager acting for him) are usually NOT hearsay: MRE 801(d)(2).', triggers:/\b(he|she|they|someone|the (contractor|plumber|inspector|owner|tenant|neighbor|manager|adjuster)|my (client|manager|office))\s+(said|told (me|us|him|her)|mentioned|reported)\b/i},
+ {id:'speculation', label:'Speculation / no personal knowledge', say:'Objection. Lack of personal knowledge. The witness has not shown they saw or heard this themselves.', rule:'MRE 602', v:'ok', tip:'Follow up on your turn: "Were you present? How do you know that?"', triggers:/\b(i think|i believe|probably|i assume|i guess|must have|i would imagine|as far as i know|i'?m sure (she|he)|i was told)\b/i},
+ {id:'foundation', label:'No foundation / not authenticated', say:'Objection. Foundation. This document has not been identified or authenticated by anyone with knowledge of it.', rule:'MRE 901', v:'warn', tip:'Use when they hand up a ledger, photo, or printout no one has identified.', triggers:/\b(according to (our|the|my) records|our records (show|reflect)|the ledger|this (printout|spreadsheet|document) shows|exhibit)\b/i},
+ {id:'bestevidence', label:'Best evidence (show the document)', say:'Objection. The witness is describing what a document says. The document itself is the best evidence of its contents.', rule:'MRE 1002', v:'warn', tip:'Use when they describe the lease, notice, or deed without producing it.', triggers:/\b(the (lease|notice|deed|contract|letter|email) (says|said|states|stated|provides))\b/i},
+ {id:'relevance', label:'Relevance', say:'Objection. Relevance. This does not make any fact in this case more or less likely.', rule:'MRE 401, 402', v:'warn', tip:'Use sparingly. Judges in bench hearings often let it in and weigh it.', triggers:null},
+ {id:'prejudice', label:'Unfair prejudice', say:'Objection under Rule 403. Whatever value this has is substantially outweighed by unfair prejudice and wasting the Court\'s time.', rule:'MRE 403', v:'warn', tip:'For personal attacks or side issues meant to make you look bad.', triggers:/\b(bankrupt(cy)?|chapter 7|prior eviction|weatherstone|always late|history of)\b/i},
+ {id:'leading', label:'Leading (their own witness)', say:'Objection. Counsel is leading his own witness.', rule:'MRE 611(d) (federal: FRE 611(c))', v:'ok', tip:'Only on direct examination of their own witness. On cross-examination, leading is allowed, and you may lead their witnesses too.', triggers:/\b(isn'?t it true|wouldn'?t you agree|correct\?|right\?)\b/i},
+ {id:'nonresponsive', label:'Non-responsive / narrative', say:'Your Honor, I ask that the answer be stricken as non-responsive, and that the witness be directed to answer the question asked.', rule:'MRE 611(a)', v:'warn', tip:'Use when you asked a yes/no question and got a speech.', triggers:null},
+ {id:'argumentative', label:'Argumentative / badgering', say:'Objection. Argumentative. Counsel is arguing with me, not asking a question.', rule:'MRE 611(a)', v:'warn', tip:'MRE 611(a) lets the court protect witnesses from harassment.', triggers:null},
+ {id:'misstates', label:'Misstates the record', say:'Objection, Your Honor. That misstates the record. The document says otherwise, and I can show the Court the exact page.', rule:'Court\'s control of proceedings; candor duty of counsel (MRPC 3.3)', v:'warn', tip:'Have the exhibit open before you say this. Pair it with the matching fact card.', triggers:/\b(never (received|got|told)|no (complaint|record|request)s?|didn'?t (complain|report|tell)|wasn'?t (notified|told)|unpaid|still owes?|balance (due|owed))\b/i},
+ {id:'completeness', label:'Rest of the document', say:'Your Honor, under Rule 106 I ask that the rest of this message be read now, so the Court has the full context.', rule:'MRE 106', v:'warn', tip:'When they quote part of a text or Rent Redi message.', triggers:/\b(text message|rent ?redi|the message (said|says)|in (his|her|the) email)\b/i},
+ {id:'lay', label:'Improper opinion', say:'Objection. The witness is giving an expert opinion without being qualified as an expert.', rule:'MRE 701, 702', v:'warn', tip:'For a manager saying the mold is harmless or the pipe was fine.', triggers:/\b(not (dangerous|harmful|toxic)|perfectly (safe|fine)|up to code|no health risk)\b/i},
+];
+
+const PROCEDURE = [
+ {id:'record', label:'Note my objection for the record', say:'Your Honor, please note my objection for the record.', rule:'MRE 103(a)(1)', v:'warn', tip:'Say this right after an objection is overruled, so the issue is preserved for appeal. State the specific ground if you did not already.'},
+ {id:'offer', label:'Offer of proof', say:'Your Honor, may I make an offer of proof so the record shows what this evidence would have been?', rule:'MRE 103(a)(2)', v:'warn', tip:'Use when the judge keeps your evidence out. Briefly state what it shows.'},
+ {id:'clarify', label:'Clarify the ruling', say:'Your Honor, so I understand the ruling: is the Court ruling on all of my defenses today, or only on possession?', rule:'General practice', v:'warn', tip:'Ask before you leave if a ruling is unclear, especially about dates.'},
+ {id:'time', label:'I need a moment', say:'Your Honor, may I have a brief moment to find the document?', rule:'Courtesy request', v:'ok', tip:'Totally normal for a self-represented party. Breathe, then find the exhibit.'},
+ {id:'adjourn', label:'Ask for an adjournment', say:'Your Honor, I respectfully request an adjournment. I received this filing only recently and I need time to respond in writing.', rule:'MCR 2.503', v:'warn', tip:'Strongest when the other side served something late. Say when you got it.'},
+ {id:'writing', label:'Ask to respond in writing', say:'Your Honor, this raises issues I would like to answer in writing. May I have [7 or 14] days to file a response?', rule:'Court\'s discretion', v:'warn', tip:'Good when a surprise legal argument comes up.'},
+ {id:'ada', label:'Accommodation / assistive tech', say:'Your Honor, I am representing myself and I have a visual and cognitive disability. I am using assistive technology to read my notes and organize my exhibits. It is not acting as my attorney. I will turn it off if the Court directs.', rule:'ADA Title II, 42 USC 12131 et seq.; SCAO form MC 70', v:'ok', tip:'Calm and short. If the judge says turn it off, do it, and ask: "May I keep my printed notes instead?"'},
+ {id:'bar', label:'"What\'s your bar number?"', say:'I don\'t have one, Your Honor. I am not an attorney. I am representing myself, and I am using assistive technology for my notes because of a disability.', rule:'Self-representation', v:'ok', tip:'Never say the app is your lawyer. It is a note and reference tool.'},
+];
+
+// Case data is NOT stored in this public code. It loads from your private relay (Google Drive) and is cached on this device.
+const SAMPLE_CASE = {id:'sample', name:'Sample case (connect your relay in Setup)', court:'Your court', judge:'Your judge', number:'—',
+  rules:'Michigan state court: MCR, MRE, MCL.', status:'Connect your relay in the Setup tab to load your real cases.', opposing:'—',
+  callouts:[], facts:[], deadlines:[{d:'Now', t:'Open Setup and connect your relay.', v:'warn'}], strategy:null};
+let CASES = [SAMPLE_CASE];
+function reviveRx(o){ if(!o) return null; if(o instanceof RegExp) return o; if(typeof o==='object'&&o.rx){ try{return new RegExp(o.rx,o.fl||'i');}catch(e){return null;} } if(typeof o==='string'){ try{return new RegExp(o,'i');}catch(e){return null;} } return null; }
+function setCases(list){
+  if(!Array.isArray(list)||!list.length) return false;
+  CASES=list.map(c=>({...c, callouts:(c.callouts||[]).map(o=>({...o, triggers:reviveRx(o.triggers)})), facts:(c.facts||[]).map(f=>({...f, k:reviveRx(f.k)||/$^/})), deadlines:c.deadlines||[]}));
+  if(!CASES.find(c=>c.id===S.caseId)) S.caseId=CASES[0].id;
+  return true;
+}
+function serializeCases(){ return CASES.filter(c=>c.id!=='sample').map(c=>({...c, callouts:c.callouts.map(o=>({...o, triggers:o.triggers?{rx:o.triggers.source,fl:o.triggers.flags}:null})), facts:c.facts.map(f=>({...f, k:f.k?{rx:f.k.source,fl:f.k.flags}:null}))})); }
+
+// Strategy: plans with switch keywords. Keywords are plain words/phrases; the app matches them in what is said or typed.
+const DEFAULT_STRATEGY = {};
+function starterPlans(id){
+  const c=CASES.find(x=>x.id===id);
+  return JSON.parse(JSON.stringify((c&&Array.isArray(c.strategy)&&c.strategy.length&&c.strategy) || [
+   {id:'A', name:'Main plan', goal:'State your position clearly with your documents.', moves:['Open with what you are asking for.','Point to your strongest document.','Ask for a written decision.'], when:'Starting plan.', kw:[]},
+   {id:'D', name:'New information: pause and reassess', goal:'Slow down on anything new.', moves:['Ask to see it.','Ask for time to respond in writing.'], when:'Anything new is introduced.', kw:['new document','new exhibit','supplemental','we just received']},
+  ]));
+}
+
+function myName(){ return (S.profile&&S.profile.name)||'the user'; }
+function myNeeds(){ return (S.profile&&S.profile.needs)?('who has '+S.profile.needs):''; }
+const SCRIPTS = [
+ {title:'Opening line (any hearing)', say:'Good morning, Your Honor. [YOUR NAME], representing myself.'},
+ {title:'If the judge asks about your device', say:'It is assistive technology for a visual and cognitive disability. It shows my notes and exhibits in large print. It is not recording, and it is not my attorney. I will turn it off if the Court directs.'},
+ {title:'If the judge says turn it off', say:'Yes, Your Honor. May I keep my printed notes in front of me?'},
+ {title:'If you lose your place', say:'Your Honor, may I have a moment to find my exhibit?'},
+ {title:'Before you leave', say:'Your Honor, may I get a copy of today\'s order, and confirm the date for the next step?'},
+];
+
+/* ================= DEVICE VAULT (PIN + AES-GCM encryption) ================= */
+const VKEY='cca-vault-v1', VTRY='cca-vault-tries';
+const VS={ mem:{}, key:null, salt:null, on:false, flushT:null,
+  get(k){ if(this.on) return (k in this.mem)?this.mem[k]:null; try{ return localStorage.getItem(k); }catch(e){ return null; } },
+  set(k,v){ if(this.on){ this.mem[k]=v; clearTimeout(this.flushT); this.flushT=setTimeout(()=>this.flush(),300); return; } try{ localStorage.setItem(k,v); }catch(e){} },
+  async flush(){ if(!this.on||!this.key) return; const iv=crypto.getRandomValues(new Uint8Array(12));
+    const ct=await crypto.subtle.encrypt({name:'AES-GCM',iv}, this.key, new TextEncoder().encode(JSON.stringify(this.mem)));
+    try{ localStorage.setItem(VKEY, JSON.stringify({v:1, salt:b64(this.salt), iv:b64(iv), ct:b64(new Uint8Array(ct))})); }catch(e){} }
+};
+const b64=u=>btoa(String.fromCharCode(...u)), unb64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+async function deriveKey(pin, salt){ const base=await crypto.subtle.importKey('raw', new TextEncoder().encode(pin), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey({name:'PBKDF2', salt, iterations:310000, hash:'SHA-256'}, base, {name:'AES-GCM', length:256}, false, ['encrypt','decrypt']); }
+const vaultExists=()=>{ try{ return !!localStorage.getItem(VKEY); }catch(e){ return false; } };
+async function vaultEnable(pin){
+  const salt=crypto.getRandomValues(new Uint8Array(16)); const key=await deriveKey(pin,salt);
+  const mem={}; [KEY,CKEY,RKEY].forEach(k=>{ try{ const v=localStorage.getItem(k); if(v!=null) mem[k]=v; }catch(e){} });
+  Object.assign(VS,{mem,key,salt,on:true}); await VS.flush();
+  [KEY,CKEY,RKEY].forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} });
+}
+async function vaultUnlock(pin){
+  const raw=JSON.parse(localStorage.getItem(VKEY)); const salt=unb64(raw.salt); const key=await deriveKey(pin,salt);
+  const pt=await crypto.subtle.decrypt({name:'AES-GCM', iv:unb64(raw.iv)}, key, unb64(raw.ct)); // throws on wrong PIN
+  Object.assign(VS,{mem:JSON.parse(new TextDecoder().decode(pt)), key, salt, on:true});
+}
+function vaultDisable(){ if(!VS.on) return; Object.entries(VS.mem).forEach(([k,v])=>{ try{ localStorage.setItem(k,v); }catch(e){} }); try{ localStorage.removeItem(VKEY); }catch(e){} Object.assign(VS,{mem:{},key:null,salt:null,on:false}); }
+function lockNow(){ if(!VS.on) return; VS.flush().finally(()=>{ location.reload(); }); }
+let idleT=null; function resetIdle(){ clearTimeout(idleT); if(VS.on) idleT=setTimeout(lockNow, 15*60*1000); }
+['pointerdown','keydown','input'].forEach(ev=>document.addEventListener(ev,resetIdle,{passive:true}));
+document.addEventListener('visibilitychange',()=>{ if(document.hidden&&VS.on){ VS.flush(); VS.hiddenAt=Date.now(); } else if(VS.on&&VS.hiddenAt&&Date.now()-VS.hiddenAt>15*60*1000) lockNow(); });
+
+/* ================= STATE ================= */
+const KEY='cyars-courtroom-v1', CKEY='cyars-courtroom-cases-v1', RKEY='cyars-courtroom-relay-v1';
+let S = {caseId:'eviction', fs:18, notes:{}, permits:{}, log:{}, strat:{}, disc:{}, rulings:{}};
+function loadLocal(){
+  try{ const j=VS.get(KEY); if(j) S=Object.assign(S,JSON.parse(j)); }catch(e){}
+  try{ const c=VS.get(CKEY); if(c) setCases(JSON.parse(c)); }catch(e){}
+}
+let saveT=null, sample=null, relayOK=false, lastSyncAt=null;
+function relayCfg(){ try{ return JSON.parse(VS.get(RKEY)||'{}'); }catch(e){ return {}; } }
+async function relay(action, extra, signal){
+  const cfg=relayCfg(); if(!cfg.url||!cfg.pass) throw {code:'not_configured', message:'Relay not set up (Setup tab).'};
+  const r=await fetch(cfg.url,{method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(Object.assign({action, passcode:cfg.pass}, extra||{})), signal, redirect:'follow'});
+  let o; try{ o=await r.json(); }catch(e){ throw {code:'bad_response', message:'Relay did not answer (HTTP '+r.status+').'}; }
+  if(!o.ok) throw {code:o.error||'error', message:o.message||o.error||'Relay error'};
+  return o;
+}
+function save(){
+  S.savedAt=Date.now(); saveCasesLocal();
+  try{ VS.set(KEY, JSON.stringify(S)); }catch(e){}
+  clearTimeout(saveT); saveT=setTimeout(syncCloud,4000);
+}
+function saveCasesLocal(){ try{ VS.set(CKEY, JSON.stringify(serializeCases())); }catch(e){} }
+let syncing=false;
+async function syncCloud(){
+  if(!relayCfg().url||!navigator.onLine||syncing) { setSync(navigator.onLine?'Saved on this device':'Offline: saved on this device'); return; }
+  syncing=true;
+  try{ await relay('save',{data:{version:1, savedAt:S.savedAt, cases:serializeCases(), state:S}}); relayOK=true; lastSyncAt=new Date(); setSync('Saved to your Drive'); }
+  catch(e){ setSync('Saved on this device (Drive sync failed)'); }
+  finally{ syncing=false; }
+}
+async function pullCloud(){
+  const o=await relay('load');
+  relayOK=true;
+  if(!o.data) return 'empty';
+  if(Array.isArray(o.data.cases)&&o.data.cases.length){ setCases(o.data.cases); saveCasesLocal(); }
+  if(o.data.state && (o.data.state.savedAt||0)>(S.savedAt||0)){ const keepCase=S.caseId; S=Object.assign(S,o.data.state); if(!CASES.find(c=>c.id===S.caseId)) S.caseId=keepCase; try{VS.set(KEY,JSON.stringify(S));}catch(e){} }
+  lastSyncAt=new Date(); return 'loaded';
+}
+window.addEventListener('online',()=>save());
+function setSync(t){ document.getElementById('stSync').textContent=t; }
+const C = ()=> CASES.find(c=>c.id===S.caseId)||CASES[0];
+const esc = s=> String(s??'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+const now = ()=> new Date().toLocaleString([], {month:'short',day:'numeric',hour:'numeric',minute:'2-digit',second:'2-digit'});
+function logEv(kind, text){
+  const id=S.caseId; (S.log[id]=S.log[id]||[]).unshift({at:now(), kind, text});
+  if(S.log[id].length>600) S.log[id].length=600;
+  save(); if(curView==='log') renderLog();
+}
+
+/* ================= RENDER ================= */
+function fillCases(){
+  const sel=document.getElementById('caseSel');
+  sel.innerHTML=CASES.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');
+  if(!CASES.find(c=>c.id===S.caseId)) S.caseId=CASES[0].id;
+  sel.value=S.caseId;
+  sel.onchange=()=>{ S.caseId=sel.value; save(); renderAll(); };
+}
+function calloutCard(o){
+  return `<div class="card"><h3 style="margin-top:0">${esc(o.title)} ${V[o.v]||''}</h3>
+   <div class="muted"><b>When:</b> ${esc(o.when)}</div>
+   <div class="say">${esc(o.say)}</div>
+   ${o.caution?`<div class="banner amber"><b>Careful:</b> ${esc(o.caution)}</div>`:''}
+   <div class="src"><b>Basis:</b> ${esc(o.basis)}</div>
+   ${o.evidence?`<div class="src"><b>Have ready:</b> ${esc(o.evidence)}</div>`:''}</div>`;
+}
+function renderPrep(){
+  const c=C();
+  document.getElementById('prepHead').innerHTML=`<div class="card">
+    <h2 style="margin-top:0">${esc(c.name)}</h2>
+    <div><b>Court:</b> ${esc(c.court)}</div><div><b>Judge:</b> ${esc(c.judge)}</div><div><b>Number:</b> ${esc(c.number)}</div>
+    <div class="src" style="margin-top:6px"><b>Rules:</b> ${esc(c.rules)}</div>
+    <h3>Where things stand</h3><div>${esc(c.status)}</div>
+    <h3>Other side</h3><div>${esc(c.opposing)}</div>
+    <p class="src">Built from your case notes as of Oct 29, 2026. Add anything newer in "My notes" below, and it will be used by the AI too.</p></div>`;
+  document.getElementById('prepCallouts').innerHTML=c.callouts.map(calloutCard).join('');
+  document.getElementById('prepFacts').innerHTML=`<div class="card"><ul class="tight">${c.facts.map(f=>`<li>${esc(f.t)} <span class="src">(${esc(f.s)})</span></li>`).join('')}</ul></div>`;
+  document.getElementById('prepDeadlines').innerHTML=`<div class="card"><ul class="tight">${c.deadlines.map(d=>`<li><b>${esc(d.d)}:</b> ${esc(d.t)} ${V[d.v]||''}</li>`).join('')}</ul></div>`;
+  document.getElementById('prepScripts').innerHTML=SCRIPTS.map(s=>`<div class="card"><h3 style="margin-top:0">${esc(s.title)}</h3><div class="say">${esc(s.say.replace('[YOUR NAME]', (S.profile&&S.profile.name)||'[your name]'))}</div></div>`).join('');
+  document.getElementById('mc70').innerHTML=`<ol class="tight">
+    <li>Get SCAO form <b>MC 70</b>, "Request for Reasonable Accommodations and Response," from the court clerk or courts.michigan.gov.</li>
+    <li>Ask for: <i>"Use of a personal device for live speech-to-text transcription and large-print display of my notes and exhibits during hearings, because of a visual and cognitive disability. No audio will be saved or shared."</i></li>
+    <li>Give it to the court's ADA coordinator as early as possible before the hearing. The coordinator is supposed to answer before the hearing.</li>
+    <li>If it is denied, the coordinator must first talk with you about an alternative. You can ask for review on form <b>MC 70a</b>.</li>
+    <li>Bring the approval to court. Enter it in the Live tab's permission record.</li>
+    <li>Federal court (including bankruptcy) has its own rules: ask the clerk for the judge's written permission instead.</li></ol>
+    <p class="src">Sources: MCR 8.115 (recording needs the presiding judge's approval; device note-taking allowed); SCAO MC 70 / MC 70a. ${V.ok}</p>`;
+  document.getElementById('caseNotes').value=S.notes[c.id]||'';
+  document.getElementById('outlineOut').innerHTML='';
+}
+function tapGrid(el, items, cls){
+  el.innerHTML=items.map(o=>`<button class="tap ${cls||''}" data-id="${o.id}">${esc(o.label||o.title)}</button>`).join('');
+  el.querySelectorAll('button').forEach(b=>b.onclick=()=>{
+    const o=items.find(x=>x.id===b.dataset.id); showCard(o); logEv('tap', (o.label||o.title)); stratWatch(o.label||o.title, true);
+  });
+}
+function renderSilent(){
+  tapGrid(document.getElementById('objGrid'), OBJECTIONS);
+  tapGrid(document.getElementById('caseGrid'), C().callouts, 'case');
+  tapGrid(document.getElementById('procGrid'), PROCEDURE);
+  document.getElementById('silentOut').innerHTML='';
+}
+function showCard(o){
+  const body=document.getElementById('sheetBody');
+  body.innerHTML=`<button class="close" id="sheetX">Close</button>
+   <h2 style="margin-top:4px">${esc(o.label||o.title)} ${V[o.v]||''}</h2>
+   ${o.when?`<div class="muted"><b>When:</b> ${esc(o.when)}</div>`:''}
+   <div class="say" style="font-size:1.2em">${esc(o.say)}</div>
+   ${o.caution?`<div class="banner amber"><b>Careful:</b> ${esc(o.caution)}</div>`:''}
+   ${o.tip?`<div class="card"><b>Tip:</b> ${esc(o.tip)}</div>`:''}
+   <div class="src"><b>Basis:</b> ${esc(o.rule||o.basis)}</div>
+   ${o.evidence?`<div class="src"><b>Have ready:</b> ${esc(o.evidence)}</div>`:''}
+   <h3>If the judge overrules you</h3><div class="say">Your Honor, please note my objection for the record.</div>
+   <div class="row" style="margin-top:10px"><button class="btn ghost" id="sheetSaid">I said it</button><button class="btn ghost" id="sheetLater">Save for later</button></div>`;
+  document.getElementById('sheet').classList.add('on');
+  document.getElementById('sheetX').onclick=closeSheet;
+  document.getElementById('sheetSaid').onclick=()=>{logEv('said',o.label||o.title);closeSheet();};
+  document.getElementById('sheetLater').onclick=()=>{logEv('flag','Preserve for later: '+(o.label||o.title));closeSheet();};
+}
+function closeSheet(){ document.getElementById('sheet').classList.remove('on'); }
+document.getElementById('sheet').addEventListener('click',e=>{ if(e.target.id==='sheet') closeSheet(); });
+
+/* ===== local matcher (fast, works offline) ===== */
+function localMatch(text){
+  const c=C(), out=[];
+  OBJECTIONS.forEach(o=>{ if(o.triggers && o.triggers.test(text)) out.push({kind:'obj', o}); });
+  c.callouts.forEach(o=>{ if(o.triggers && o.triggers.test(text)) out.push({kind:'case', o}); });
+  const facts=c.facts.filter(f=>f.k.test(text));
+  return {hits:out, facts};
+}
+function matchHTML(m){
+  if(!m.hits.length && !m.facts.length) return '<div class="card muted">No match in your prepared material. Try "Ask AI", or flag it for later.</div>';
+  let h='';
+  m.hits.forEach(x=>{ h+=`<div class="card sug ${x.kind==='obj'?'now':'ask'}"><span class="pill ${x.kind==='obj'?'p-bad':'p-info'}">${x.kind==='obj'?'Possible objection':'Your call-out'}</span> <b>${esc(x.o.label||x.o.title)}</b><div class="say">${esc(x.o.say)}</div><div class="src">${esc(x.o.rule||x.o.basis)}</div>${x.o.tip?`<div class="src">${esc(x.o.tip)}</div>`:''}${x.o.caution?`<div class="banner amber">${esc(x.o.caution)}</div>`:''}</div>`; });
+  if(m.facts.length) h+=`<div class="card"><b>Facts to compare:</b><ul class="tight">${m.facts.map(f=>`<li>${esc(f.t)} <span class="src">(${esc(f.s)})</span></li>`).join('')}</ul></div>`;
+  return h;
+}
+
+/* ===== AI ===== */
+function caseContext(){
+  const c=C();
+  return `CASE: ${c.name}\nCourt: ${c.court}; ${c.judge}; No. ${c.number}\nRules: ${c.rules}\nStatus: ${c.status}\nOther side: ${c.opposing}\nKEY FACTS:\n${c.facts.map(f=>'- '+f.t+' ['+f.s+']').join('\n')}\nPREPARED CALL-OUTS:\n${c.callouts.map(o=>'- '+o.id+': '+o.title+' | basis: '+o.basis).join('\n')}\nUSER'S LATEST NOTES:\n${(S.notes[c.id]||'(none)').slice(0,3000)}\nDISCOVERY / NEW INFO:\n${(S.disc[c.id]||'(none)').slice(0,3000)}\nRULINGS SO FAR THIS HEARING:\n${(S.rulings[c.id]||[]).slice(-10).map(r=>'- '+r.at+': '+r.text).join('\n')||'(none)'}\nSTRATEGY PLANS:\n${ST().plans.map(p=>'- '+p.id+' "'+p.name+'": '+p.goal+' | switch when: '+p.when).join('\n')}\nCURRENT PLAN: ${ST().current}`;
+}
+function aiRules(){ return `You are the courtroom assistant for ${myName()}, a self-represented party ${myNeeds()}. You are not her lawyer and must never claim to be.
+Think in two passes before answering:
+1) As an experienced, ethical trial attorney: what is the strongest proper response to what just happened, grounded only in her real facts, documents and the governing rules?
+2) As the presiding judge: is it relevant right now, timely, supported by a real rule, respectful, brief, and something a judge would welcome rather than see as argumentative, interrupting, or a personal attack? Rewrite or drop anything that fails this check.
+Rules: Never invent cases, citations, quotes, facts, rulings or deadlines. Only cite a rule you are confident exists; otherwise set "basis" to "No reliable authority; check before using". Use only facts in the case context or the transcript. Never suggest coaching a witness, talking to jurors, interrupting the judge mid-ruling, disobeying or arguing with a ruling once made, or recording without permission. Never call something fraud or a lie; if a document contradicts a statement, say it is "not accurate" and point to the document. Suggested words are short, calm, courteous, and address the court as "Your Honor". When the judge has ruled, the proper move is to accept it, note an objection for the record if needed, and preserve the issue in writing.
+Categories: "now" = time-sensitive objection while testimony or evidence is happening; "ask" = point or question for her own turn; "later" = preserve for a written motion or post-hearing filing; "hold" = do not interrupt; "none" = no reliable recommendation.`; }
+async function getSample(){
+  if(!relayCfg().url) return null;
+  if(!sample){ sample=async(prompt,opts={})=>{ const o=await relay('ai',{tier:opts.modelTier||'default', system:'', prompt, max_tokens: opts.modelTier==='complex'?4000:1500}, opts.signal); return {text:o.text, model:o.model}; }; }
+  return sample;
+}
+function parseJSON(t){ const m=t.match(/\[[\s\S]*\]|\{[\s\S]*\}/); if(!m) throw new Error('No JSON'); return JSON.parse(m[0]); }
+async function aiSuggest(text, opts={}){
+  const smp=await getSample();
+  if(!smp) throw {code:'not_configured', message:'Connect your relay in Setup to turn on AI.'};
+  const prompt=`${aiRules()}\n\n${caseContext()}\n\nWHAT WAS JUST SAID IN COURT (may be rough speech-to-text):\n"""${text.slice(-2500)}"""\n\nReturn ONLY a JSON object: {"suggestions":[0 to 3 items, most urgent first, each {"category":"now|ask|later|hold|none","issue":"short title","say":"exact words she could say","why":"one sentence","basis":"rule or statute, or 'No reliable authority; check before using'","evidence":"which of her facts or exhibits to point to, or ''","judge_view":"one sentence: how the presiding judge is likely to receive this","proper":true or false (false if it fails the judge check)}],"strategy":{"shift":true or false,"to":"plan id from STRATEGY PLANS","reason":"one short sentence citing what was said","next_move":"the single next thing she should do"},"ruling":"if the judge just ruled on something, state the ruling in a few words, else ''"}. Shift only when what was said clearly meets a plan's switch condition or makes the current plan unworkable; otherwise shift=false.`;
+  const r=await smp(prompt,{modelTier: opts.quick?'quick':'default', signal: opts.signal});
+  const o=parseJSON(r.text);
+  if(Array.isArray(o)) return o;
+  if(o.ruling) addRuling(o.ruling,'AI');
+  if(o.strategy) applyAIStrategy(o.strategy);
+  return Array.isArray(o.suggestions)?o.suggestions.filter(x=>x.proper!==false):[];
+}
+function aiHTML(list){
+  if(!Array.isArray(list)||!list.length) return '<div class="card muted">AI: nothing worth acting on in that.</div>';
+  const label={now:['p-bad','Speak now'],ask:['p-info','On your turn'],later:['p-warn','Save for later'],hold:['p-info','Don\'t interrupt'],none:['p-info','No reliable advice']};
+  return list.map(s=>{const L=label[s.category]||label.none; return `<div class="card sug ${s.category}"><span class="pill ${L[0]}">${L[1]}</span><span class="pill p-warn">AI: unverified</span> <b>${esc(s.issue)}</b>
+   ${s.say?`<div class="say">${esc(s.say)}</div>`:''}<div class="src">${esc(s.why)}</div><div class="src"><b>Basis:</b> ${esc(s.basis)}</div>${s.evidence?`<div class="src"><b>Point to:</b> ${esc(s.evidence)}</div>`:''}${s.judge_view?`<div class="src"><b>Judge's view:</b> ${esc(s.judge_view)}</div>`:''}</div>`;}).join('');
+}
+function aiErr(e){
+  if(e&&e.code==='rate_limited') return '<div class="banner amber">AI is busy. Use the tap cards; try again in a minute.</div>';
+  if(e&&(e.code==='not_granted'||e.code==='not_configured')) return '<div class="banner amber">AI is off until your relay is connected (Setup tab). Tap cards, matching and strategy switching still work.</div>';
+  if(e&&e.code==='unauthorized') return '<div class="banner amber">The relay passcode is wrong. Fix it in Setup.</div>';
+  if(e&&e.name==='TypeError') return '<div class="banner amber">No internet right now. Tap cards, matching and strategy switching still work offline.</div>';
+  return '<div class="banner amber">AI could not answer ('+esc(e&&e.message||'error')+'). Use the tap cards.</div>';
+}
+
+/* ===== Silent actions ===== */
+document.getElementById('silentMatch').onclick=()=>{
+  const t=document.getElementById('silentText').value.trim(); if(!t) return;
+  document.getElementById('silentOut').innerHTML=matchHTML(localMatch(t)); logEv('note',t); stratWatch(t);
+};
+document.getElementById('silentAI').onclick=async()=>{
+  const t=document.getElementById('silentText').value.trim(); if(!t) return;
+  const out=document.getElementById('silentOut'); out.innerHTML=matchHTML(localMatch(t))+'<div class="card muted">Asking AI...</div>';
+  logEv('note',t); stratWatch(t);
+  try{ const l=await aiSuggest(t,{quick:true}); out.innerHTML=aiHTML(l)+matchHTML(localMatch(t)); l.forEach(s=>logEv('ai',`[${s.category}] ${s.issue}: ${s.say}`)); }
+  catch(e){ out.innerHTML=aiErr(e)+matchHTML(localMatch(t)); }
+};
+document.getElementById('silentFlag').onclick=()=>{
+  const t=document.getElementById('silentText').value.trim(); if(!t) return;
+  logEv('flag','Preserve for later: '+t); document.getElementById('silentText').value='';
+  document.getElementById('silentOut').innerHTML='<div class="banner green">Flagged. It is in the Log tab.</div>';
+};
+
+/* ===== Prep actions ===== */
+let notesT=null;
+document.getElementById('caseNotes').addEventListener('input',e=>{
+  S.notes[S.caseId]=e.target.value; clearTimeout(notesT);
+  notesT=setTimeout(()=>{ save(); document.getElementById('notesSaved').textContent='Saved '+now(); },600);
+});
+document.getElementById('genOutline').onclick=async()=>{
+  const p=document.getElementById('hearPurpose').value.trim(), d=document.getElementById('hearDate').value;
+  const st=document.getElementById('outlineStatus'), out=document.getElementById('outlineOut');
+  if(!p){ st.textContent='Say what the hearing is for first.'; return; }
+  st.textContent='Building...'; out.innerHTML='';
+  const smp=await getSample();
+  if(!smp){ st.textContent=''; out.innerHTML=aiErr({code:'not_granted'}); return; }
+  const prompt=`${aiRules()}\n\n${caseContext()}\n\nHEARING: ${p}. Date: ${d||'not given'}. Today is ${new Date().toDateString()}.\nWrite a one-page hearing outline for her in plain words, as JSON: {"goal":"one sentence","bring":["exhibits/documents to bring"],"opening":"30-second opening she can read","points":[{"point":"","say":"","evidence":"","basis":""}],"expect":[{"they_may_say":"","you_respond":""}],"ask_for":"exact relief to request","risks":["honest weak spots"],"check_first":["anything she must verify or ask a lawyer before the hearing"]}. Use 3-6 points and 3-5 expect items. Mark any basis you are not sure of as "check before using".`;
+  try{
+    const r=await smp(prompt,{modelTier:'default'}); const o=parseJSON(r.text);
+    out.innerHTML=`<div class="banner amber">AI draft: unverified. Check every rule and date before you rely on it.</div>
+     <h3>Goal</h3><div>${esc(o.goal)}</div>
+     <h3>Bring</h3><ul class="tight">${(o.bring||[]).map(x=>`<li>${esc(x)}</li>`).join('')}</ul>
+     <h3>Opening</h3><div class="say">${esc(o.opening)}</div>
+     <h3>Your points</h3>${(o.points||[]).map(x=>`<div class="card"><b>${esc(x.point)}</b><div class="say">${esc(x.say)}</div><div class="src">${esc(x.evidence)} | ${esc(x.basis)}</div></div>`).join('')}
+     <h3>What they may say</h3>${(o.expect||[]).map(x=>`<div class="card"><div class="muted">They: ${esc(x.they_may_say)}</div><div class="say">${esc(x.you_respond)}</div></div>`).join('')}
+     <h3>Ask the judge for</h3><div class="say">${esc(o.ask_for)}</div>
+     <h3>Weak spots</h3><ul class="tight">${(o.risks||[]).map(x=>`<li>${esc(x)}</li>`).join('')}</ul>
+     <h3>Check first</h3><ul class="tight">${(o.check_first||[]).map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`;
+    st.textContent=''; logEv('prep','Outline built: '+p);
+  }catch(e){ st.textContent=''; out.innerHTML=aiErr(e); }
+};
+
+/* ===== Live: permission gate ===== */
+const pIds=['pCourt','pJudge','pDate','pType','pRef'];
+const localDate=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');};
+function permKey(){ return S.caseId; }
+function checkPerm(){
+  const ok=pIds.every(i=>document.getElementById(i).value.trim()) && pScope.checked && pStop.checked;
+  document.getElementById('pSave').disabled=!ok;
+}
+pIds.forEach(i=>document.getElementById(i).addEventListener('input',checkPerm));
+pIds.forEach(i=>document.getElementById(i).addEventListener('change',checkPerm));
+const pScope=document.getElementById('pScope'), pStop=document.getElementById('pStop');
+pScope.onchange=checkPerm; pStop.onchange=checkPerm;
+document.getElementById('pSave').onclick=()=>{
+  const rec={}; pIds.forEach(i=>rec[i]=document.getElementById(i).value.trim()); rec.at=now();
+  const today=localDate();
+  if(rec.pDate!==today){ document.getElementById('pMsg').textContent='The hearing date must be today. A permission record unlocks live mode only on the day of that hearing.'; return; }
+  S.permits[permKey()]=rec; save(); logEv('permission',`Live mode unlocked: ${rec.pType} (${rec.pRef}), ${rec.pJudge}`);
+  renderLive();
+};
+function activePermit(){
+  const r=S.permits[permKey()]; if(!r) return null;
+  return r.pDate===localDate()?r:null;
+}
+function renderLive(){
+  const r=activePermit(), c=C();
+  document.getElementById('permGate').style.display=r?'none':'block';
+  document.getElementById('liveArea').style.display=r?'block':'none';
+  if(!r){ const pc=document.getElementById('pCourt'); if(!pc.value) pc.value=c.court; const pj=document.getElementById('pJudge'); if(!pj.value) pj.value=c.judge;
+    const fed=c.id==='bk'; const sel=document.getElementById('pType');
+    [...sel.options].forEach(o=>{ o.disabled = fed && o.value && !/Written order/.test(o.value); });
+    document.getElementById('pMsg').textContent = fed?'Federal court: only a written order from the judge unlocks live mode here.':'';
+    checkPerm(); return; }
+  document.getElementById('permBanner').innerHTML=`<b>Permission on file:</b> ${esc(r.pType)}. Proof: ${esc(r.pRef)}. ${esc(r.pJudge)}, ${esc(r.pDate)}.`;
+}
+document.getElementById('judgeStop').onclick=()=>{
+  stopMic(); clearTimeout(liveT); if(inflight) inflight.abort();
+  const tr=document.getElementById('transcript'); tr.value=''; tr.blur();
+  delete S.permits[permKey()]; save(); logEv('stop','Judge directed stop. Live mode shut off and transcript cleared.');
+  renderLive(); switchView('silent');
+  document.getElementById('silentOut').innerHTML='<div class="banner green">Live mode is off and the transcript is cleared. Silent mode is still here for your notes, if the judge allows notes. Say: "Yes, Your Honor."</div>';
+};
+
+/* ===== Live: transcript watcher ===== */
+let analyzedLen=0, liveT=null, inflight=null, rec=null;
+const tr=document.getElementById('transcript');
+tr.addEventListener('input',()=>{ clearTimeout(liveT); liveT=setTimeout(analyzeNew, 2500); });
+async function analyzeNew(){
+  const all=tr.value; if(all.length<analyzedLen) analyzedLen=0;
+  const fresh=all.slice(analyzedLen).trim(); if(fresh.length<12) return;
+  analyzedLen=all.length;
+  stratWatch(fresh);
+  const m=localMatch(fresh);
+  const box=document.getElementById('liveSug');
+  if(m.hits.length||m.facts.length){ box.insertAdjacentHTML('afterbegin', `<div class="src">${now()} — matched in your notes</div>`+matchHTML(m)); m.hits.forEach(x=>logEv('match',(x.o.label||x.o.title)+' ← "'+fresh.slice(0,120)+'"')); }
+  if(!document.getElementById('aiAuto').checked) return;
+  if(inflight) return; // one at a time
+  inflight=new AbortController(); const ls=document.getElementById('liveStatus'); ls.textContent='AI checking...';
+  try{
+    const context=all.slice(-1500);
+    const l=await aiSuggest(context,{quick:true, signal:inflight.signal});
+    const keep=l.filter(s=>s.category!=='none');
+    if(keep.length){ box.insertAdjacentHTML('afterbegin', `<div class="src">${now()} — AI</div>`+aiHTML(keep)); keep.forEach(s=>logEv('ai',`[${s.category}] ${s.issue}: ${s.say}`)); }
+    ls.textContent='';
+  }catch(e){ if(e&&e.name!=='AbortError') ls.innerHTML=e.code==='rate_limited'?'AI paused (busy).':'AI unavailable; matching still on.'; }
+  finally{ inflight=null; }
+}
+document.getElementById('liveClear').onclick=()=>{ tr.value=''; analyzedLen=0; document.getElementById('liveSug').innerHTML=''; };
+
+/* Listening: works on the hosted app in Chrome (Android, Windows). Speech is turned into text by the browser's speech service. */
+const SR = window.SpeechRecognition||window.webkitSpeechRecognition;
+let interimEl=null;
+if(SR){ const b=document.getElementById('micBtn'); b.style.display='inline-block'; b.textContent='Start listening'; b.classList.remove('ghost'); b.onclick=()=>rec?stopMic():startMic();
+  document.getElementById('micHelp').textContent='Tap "Start listening." Keep the phone on silent and face-up near you. Text appears as people speak and the app checks it against your case. If it stops, it restarts on its own. Keyboard voice typing also works as a backup.'; }
+function startMic(){
+  if(!activePermit()) return;
+  try{
+    rec=new SR(); rec.continuous=true; rec.interimResults=true; rec.lang='en-US';
+    if(!interimEl){ interimEl=document.createElement('div'); interimEl.className='muted'; interimEl.style.minHeight='1.4em'; tr.parentNode.insertBefore(interimEl,tr.nextSibling); }
+    rec.onresult=e=>{ let interim=''; for(let i=e.resultIndex;i<e.results.length;i++){ const t=e.results[i][0].transcript; if(e.results[i].isFinal){ tr.value+=(tr.value?' ':'')+t.trim(); tr.dispatchEvent(new Event('input')); } else interim+=t; } interimEl.textContent=interim?('… '+interim):''; };
+    rec.onerror=e=>{ if(e.error==='no-speech'||e.error==='aborted') return; document.getElementById('micState').textContent=(e.error==='not-allowed'?'Microphone permission was denied. Allow it in Chrome site settings.':'Listening problem ('+e.error+'). Tap Start again, or use keyboard voice typing.'); if(e.error==='not-allowed'){ rec=null; document.getElementById('micBtn').textContent='Start listening'; } };
+    rec.onend=()=>{ if(rec&&activePermit()){ setTimeout(()=>{ try{rec.start();}catch(_){} },250); } };
+    rec.start(); document.getElementById('micBtn').textContent='Stop listening'; document.getElementById('micState').textContent='Listening...';
+    logEv('listen','Listening started');
+  }catch(e){ document.getElementById('micState').textContent='Listening not available in this browser. Use Chrome, or keyboard voice typing.'; rec=null; }
+}
+function stopMic(){ const r=rec; rec=null; if(r){ try{r.stop();}catch(_){} logEv('listen','Listening stopped'); } document.getElementById('micBtn').textContent='Start listening'; document.getElementById('micState').textContent=''; if(interimEl) interimEl.textContent=''; }
+
+/* ===== Log ===== */
+function renderLog(){
+  const l=S.log[S.caseId]||[];
+  document.getElementById('logList').innerHTML = l.length? l.map(e=>`<div class="logline"><b>${esc(e.at)}</b> · ${esc(e.kind)} · ${esc(e.text)}</div>`).join('') : '<div class="muted">Nothing logged yet for this case.</div>';
+  document.getElementById('postHearing').innerHTML=`<ul class="tight">
+   <li>Write down the judge's exact ruling and any dates the same day.</li>
+   <li>Order the official transcript or recording from the court for anything you plan to file; your log is your notes, not the record.</li>
+   <li>Review every "Save for later" item. Each one may need a written motion.</li>
+   <li>State court: a motion for relief from judgment for fraud or misrepresentation (MCR 2.612(C)(1)(c)) must be filed within one year of the judgment.</li>
+   <li>Ask the clerk about appeal deadlines on the day of any ruling you disagree with. In district court they are short.</li></ul>`;
+  document.getElementById('about').innerHTML=`This is assistive technology for notes and lookup, not a lawyer. Built-in rules marked "Checked Oct 29 2026" were confirmed against Michigan sources that day; everything marked "Verify" or "AI: unverified" must be checked before you rely on it. Live mode stays locked without a permission record for that day's hearing, and stops completely on the red button. No audio is saved by this app. Your notes, permissions, and log save on this device and, when available, to your account.`;
+}
+document.getElementById('logCopy').onclick=async()=>{
+  const c=C(), l=S.log[c.id]||[];
+  const text=`HEARING LOG — ${c.name}\n`+l.slice().reverse().map(e=>`${e.at} | ${e.kind} | ${e.text}`).join('\n');
+  try{ await navigator.clipboard.writeText(text); document.getElementById('logMsg').textContent='Copied.'; }
+  catch(e){ document.getElementById('logMsg').textContent='Copy blocked; long-press the log to select it.'; }
+};
+let clearArm=false;
+document.getElementById('logClear').onclick=e=>{
+  if(!clearArm){ clearArm=true; e.target.textContent='Tap again to clear'; setTimeout(()=>{clearArm=false;e.target.textContent="Clear this case's log";},4000); return; }
+  S.log[S.caseId]=[]; save(); renderLog(); clearArm=false; e.target.textContent="Clear this case's log";
+};
+
+/* ===== Views, text size ===== */
+let curView='prep';
+function switchView(v){
+  curView=v;
+  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
+  document.querySelectorAll('section.view').forEach(s=>s.classList.toggle('on',s.id==='v-'+v));
+  document.getElementById('stMode').innerHTML='Mode: <b>'+v[0].toUpperCase()+v.slice(1)+'</b>';
+  if(v==='log') renderLog(); if(v==='live') renderLive(); if(v==='setup') renderSetup(); renderStratBar();
+  if(v!=='live') stopMic();
+  window.scrollTo(0,0);
+}
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>switchView(b.dataset.v));
+function applyFs(){ document.documentElement.style.setProperty('--fs',S.fs+'px'); }
+document.getElementById('aPlus').onclick=()=>{S.fs=Math.min(28,S.fs+2);applyFs();save();};
+document.getElementById('aMinus').onclick=()=>{S.fs=Math.max(14,S.fs-2);applyFs();save();};
+
+/* ================= STRATEGY ENGINE ================= */
+function ST(){
+  const id=S.caseId;
+  const cs=CASES.find(x=>x.id===id), hasCaseStrat=!!(cs&&Array.isArray(cs.strategy)&&cs.strategy.length);
+  const cur=S.strat[id];
+  if(!cur||!Array.isArray(cur.plans)||!cur.plans.length||(cur.src==='generic'&&hasCaseStrat))
+    S.strat[id]={plans:starterPlans(id), current:'A', step:0, prev:null, hist:(cur&&cur.hist)||[], src:hasCaseStrat?'case':'generic'};
+  const st=S.strat[id]; if(!st.plans.find(p=>p.id===st.current)) st.current=st.plans[0].id;
+  return st;
+}
+const curPlan=()=>{const st=ST(); return st.plans.find(p=>p.id===st.current);};
+function kwRegex(list){
+  const k=(list||[]).map(w=>String(w).trim()).filter(Boolean); if(!k.length) return null;
+  return new RegExp('\\b('+k.map(w=>w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&').replace(/[\s-]+/g,'[\\s-]+')).join('|')+')\\b','i');
+}
+let lastShiftAt=0, shiftBannerT=null;
+const RULING_RX=/\b(sustained|overruled|the court finds|the court (will|is going to) (grant|deny)|(motion|request|objection) (is )?(granted|denied)|so ordered|i'?m (granting|denying)|i (grant|deny))\b/i;
+function addRuling(text, src){
+  const id=S.caseId; (S.rulings[id]=S.rulings[id]||[]).push({at:now(), text:String(text).slice(0,200)});
+  logEv('ruling',(src?src+': ':'')+String(text).slice(0,200));
+}
+/* Called on every new piece of information: transcript, typed note, tap. Shifts on its own. */
+function stratWatch(text, fromTap){
+  if(!text) return;
+  if(!fromTap && RULING_RX.test(text)) addRuling(text.slice(0,200),'Heard');
+  const st=ST();
+  if(Date.now()-lastShiftAt<15000) return;           // no ping-pong
+  for(const p of st.plans){
+    if(p.id===st.current) continue;
+    const rx=kwRegex(p.kw); const m=rx&&text.match(rx);
+    if(m){ shiftTo(p.id, `You ${fromTap?'tapped':'heard'} "${m[0]}"`, 'auto'); return; }
+  }
+}
+function applyAIStrategy(d){
+  const st=ST();
+  if(d&&d.next_move){ st.aiNext=d.next_move; save(); renderStratBar(); }
+  if(d&&d.shift&&d.to&&d.to!==st.current&&st.plans.find(p=>p.id===d.to)&&Date.now()-lastShiftAt>15000) shiftTo(d.to, d.reason||'AI saw a change', 'AI');
+}
+function shiftTo(id, reason, how){
+  const st=ST(); const from=st.current; if(from===id) return;
+  st.prev=from; st.current=id; st.step=0; st.aiNext=''; lastShiftAt=Date.now();
+  st.hist.push({at:now(), from, to:id, reason, how}); if(st.hist.length>100) st.hist.shift();
+  save(); logEv('strategy',`Shifted ${from} → ${id} (${how}): ${reason}`);
+  renderStratBar(true, reason); if(curView==='prep') renderStrategy();
+}
+function undoShift(){
+  const st=ST(); if(!st.prev) return; const back=st.prev; const from=st.current;
+  st.current=back; st.prev=null; st.step=0; lastShiftAt=Date.now(); save();
+  logEv('strategy',`Undo: back to ${back} from ${from}`); renderStratBar(); if(curView==='prep') renderStrategy();
+}
+function renderStratBar(flash, reason){
+  const bar=document.getElementById('stratBar');
+  bar.classList.toggle('on', curView==='silent'||curView==='live');
+  const st=ST(), p=curPlan(); if(!p){bar.innerHTML='';return;}
+  const next=st.aiNext || p.moves[st.step] || 'All planned moves done. Listen for the next change.';
+  bar.innerHTML=`${flash?`<div class="shift">Strategy changed to Plan ${esc(p.id)}: ${esc(p.name)}. ${esc(reason)}. <button class="btn ghost" id="stUndo" style="padding:6px 10px;margin-left:6px">Undo</button></div>`:''}
+    <div class="lab">STRATEGY · PLAN ${esc(p.id)}</div><div class="plan">${esc(p.name)}</div>
+    <div class="muted">${esc(p.goal)}</div>
+    <div class="say next">${esc(next)}</div>
+    <div class="row"><button class="btn ghost" id="stDone">Done, next move</button><button class="btn ghost" id="stPlans">Plans</button>${st.prev&&!flash?`<button class="btn ghost" id="stUndo">Back to Plan ${esc(st.prev)}</button>`:''}</div>`;
+  const u=document.getElementById('stUndo'); if(u) u.onclick=undoShift;
+  document.getElementById('stDone').onclick=()=>{ const st=ST(); logEv('move','Done: '+(st.aiNext||curPlan().moves[st.step]||'')); if(st.aiNext) st.aiNext=''; else st.step=Math.min(st.step+1, curPlan().moves.length); save(); renderStratBar(); };
+  document.getElementById('stPlans').onclick=showPlansSheet;
+  if(flash){ const t=document.getElementById('toast');
+    t.innerHTML=`Now Plan ${esc(p.id)}: ${esc(p.name)}<div style="font-weight:500;font-size:.9em">${esc(reason)}. Next: ${esc(next)}</div><div class="row" style="margin-top:6px"><button class="btn" id="tUndo">Undo</button><button class="btn ghost" id="tOk">OK</button></div>`;
+    t.classList.add('on'); document.getElementById('tUndo').onclick=()=>{t.classList.remove('on');undoShift();}; document.getElementById('tOk').onclick=()=>t.classList.remove('on');
+    if(navigator.vibrate) try{navigator.vibrate([80,60,80]);}catch(_){}
+    setTimeout(()=>t.classList.remove('on'),20000); }
+  if(flash){ clearTimeout(shiftBannerT); shiftBannerT=setTimeout(()=>{ if(curView==='silent'||curView==='live') renderStratBar(); },20000); }
+}
+function showPlansSheet(){
+  const st=ST(), body=document.getElementById('sheetBody');
+  body.innerHTML=`<button class="close" id="sheetX">Close</button><h2 style="margin-top:4px">Your plans</h2>`+
+   st.plans.map(p=>`<div class="card ${p.id===st.current?'plancard cur':''}"><b>Plan ${esc(p.id)}: ${esc(p.name)}</b><div class="muted">Switch when: ${esc(p.when)}</div><ol class="tight">${p.moves.map(m=>`<li>${esc(m)}</li>`).join('')}</ol>${p.id!==st.current?`<button class="btn" data-go="${esc(p.id)}">Switch to Plan ${esc(p.id)}</button>`:'<span class="pill p-ok">Current</span>'}</div>`).join('');
+  document.getElementById('sheet').classList.add('on');
+  document.getElementById('sheetX').onclick=closeSheet;
+  body.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{ lastShiftAt=0; shiftTo(b.dataset.go,'You switched it','manual'); closeSheet(); });
+}
+function renderStrategy(){
+  const st=ST(), box=document.getElementById('stratPlans');
+  document.getElementById('discNotes').value=S.disc[S.caseId]||'';
+  box.innerHTML=st.plans.map((p,i)=>`<div class="card plancard ${p.id===st.current?'cur':''}" data-i="${i}">
+    <div class="row"><b>Plan ${esc(p.id)}</b>${p.id===st.current?'<span class="pill p-ok">Current</span>':''}</div>
+    <label class="f">Name</label><input type="text" data-f="name" value="${esc(p.name)}">
+    <label class="f">Goal</label><textarea data-f="goal">${esc(p.goal)}</textarea>
+    <label class="f">Moves (one per line, in order)</label><textarea data-f="moves">${esc(p.moves.join('\n'))}</textarea>
+    <label class="f">Switch to this plan when</label><textarea data-f="when">${esc(p.when)}</textarea>
+    <label class="f">Words that trigger the switch (comma separated)</label><textarea data-f="kw">${esc((p.kw||[]).join(', '))}</textarea></div>`).join('')+
+    (st.hist.length?`<div class="card"><b>Strategy changes</b><ul class="tight">${st.hist.slice(-8).reverse().map(h=>`<li>${esc(h.at)}: ${esc(h.from)} → ${esc(h.to)} (${esc(h.how)}) ${esc(h.reason)}</li>`).join('')}</ul></div>`:'');
+  box.querySelectorAll('.plancard').forEach(card=>{
+    const p=st.plans[+card.dataset.i];
+    card.querySelectorAll('[data-f]').forEach(el=>el.addEventListener('input',()=>{
+      const f=el.dataset.f, v=el.value;
+      if(f==='moves') p.moves=v.split('\n').map(x=>x.trim()).filter(Boolean);
+      else if(f==='kw') p.kw=v.split(',').map(x=>x.trim()).filter(Boolean);
+      else p[f]=v;
+      st.src='user'; save();
+    }));
+  });
+}
+let discT=null;
+document.getElementById('discNotes').addEventListener('input',e=>{ S.disc[S.caseId]=e.target.value; clearTimeout(discT); discT=setTimeout(save,600); });
+let resetArm=false;
+document.getElementById('stratReset').onclick=e=>{
+  if(!resetArm){ resetArm=true; e.target.textContent='Tap again: replaces your edited plans'; setTimeout(()=>{resetArm=false;e.target.textContent='Reset to starter plans';},4000); return; }
+  resetArm=false; e.target.textContent='Reset to starter plans';
+  S.strat[S.caseId]={plans:starterPlans(S.caseId), current:'A', step:0, prev:null, hist:ST().hist, src:'case'}; save(); logEv('strategy','Reset to starter plans'); renderStrategy();
+};
+document.getElementById('stratBuild').onclick=async()=>{
+  const stEl=document.getElementById('stratStatus'); stEl.textContent='Building...';
+  const smp=await getSample(); if(!smp){ stEl.innerHTML=''; document.getElementById('stratPlans').insertAdjacentHTML('afterbegin',aiErr({code:'not_granted'})); return; }
+  const prompt=`${aiRules()}\n\n${caseContext()}\n\nBuild her hearing strategy from everything above, especially DISCOVERY / NEW INFO. Return ONLY JSON: {"plans":[{"id":"A","name":"short","goal":"one sentence","moves":["ordered moves she makes, each one sentence she can act on"],"when":"plain-words condition for switching to this plan","kw":["5 to 12 short words or phrases that would be SAID in court when this condition happens"]}]}. Plan A is the starting plan (kw may be empty). Include 3 to 5 plans, and always include a plan with id "D" for new information (pause, see it, object to foundation, ask for time). Use her real facts and dates. Do not invent facts or authorities; write "check before using" next to any rule you are unsure of.`;
+  try{
+    const r=await smp(prompt,{modelTier:'complex'}); const o=parseJSON(r.text);
+    if(!o.plans||!o.plans.length) throw new Error('No plans returned');
+    const plans=o.plans.map(p=>({id:String(p.id||'?').slice(0,3), name:String(p.name||''), goal:String(p.goal||''), moves:(p.moves||[]).map(String), when:String(p.when||''), kw:(p.kw||[]).map(String)}));
+    const old=ST(); S.strat[S.caseId]={plans, current:plans[0].id, step:0, prev:null, hist:old.hist, backup:old.plans, src:'ai'};
+    save(); logEv('strategy','AI built '+plans.length+' plans from discovery notes'); renderStrategy();
+    stEl.innerHTML='Done. <span class="pill p-warn">AI: unverified</span> Your old plans are saved; tap "Reset" for starters.';
+  }catch(e){ stEl.textContent=''; document.getElementById('stratPlans').insertAdjacentHTML('afterbegin',aiErr(e)); }
+};
+
+function renderAll(){ renderPrep(); renderStrategy(); renderSilent(); renderLive(); renderStratBar(); if(curView==='log') renderLog(); }
+
+/* ===== Setup ===== */
+function renderSetup(){
+  const cfg=relayCfg();
+  document.getElementById('relayUrl').value=cfg.url||''; document.getElementById('relayPass').value=cfg.pass||'';
+  document.getElementById('pinState').innerHTML=VS.on?'<span class="pill p-ok">PIN lock on</span> Data on this device is encrypted.':'<span class="pill p-warn">PIN lock off</span> Turn it on before taking this device to court.';
+  const pf=S.profile||{}; document.getElementById('myName').value=pf.name||''; document.getElementById('myNeeds').value=pf.needs||'';
+  const real=CASES.filter(c=>c.id!=='sample');
+  document.getElementById('setupStatus').innerHTML=`<ul class="tight">
+   <li><b>Relay:</b> ${cfg.url?(relayOK?'<span class="pill p-ok">Connected</span>':'<span class="pill p-warn">Saved, not confirmed yet</span>'):'<span class="pill p-bad">Not set up</span>'}</li>
+   <li><b>Cases on this device:</b> ${real.length?real.map(c=>esc(c.name)).join('; '):'none yet'}</li>
+   <li><b>Last Drive sync:</b> ${lastSyncAt?esc(lastSyncAt.toLocaleString()):'not yet this session'}</li>
+   <li><b>Internet:</b> ${navigator.onLine?'online':'offline (Silent, Prep, matching and strategy still work)'}</li>
+   <li><b>Listening:</b> ${SR?'available in this browser':'not available here; use Chrome or keyboard voice typing'}</li>
+   <li><b>Installed as app:</b> ${matchMedia('(display-mode: standalone)').matches?'yes':'no. In Chrome, tap ⋮ then "Add to Home screen" or "Install app"'}</li></ul>`;
+}
+document.getElementById('relaySave').onclick=async()=>{
+  const url=document.getElementById('relayUrl').value.trim(), pass=document.getElementById('relayPass').value.trim(), m=document.getElementById('relayMsg');
+  if(!/^https:\/\/script\.google\.com\/macros\/s\/[^/]+\/exec$/.test(url)){ m.textContent='That does not look like an Apps Script web app URL ending in /exec.'; return; }
+  if(pass.length<8){ m.textContent='Passcode is too short.'; return; }
+  try{ VS.set(RKEY, JSON.stringify({url,pass})); }catch(e){}
+  S.profile={name:document.getElementById('myName').value.trim(), needs:document.getElementById('myNeeds').value.trim()}; save();
+  sample=null; m.textContent='Testing...';
+  try{ await relay('ping'); relayOK=true; m.textContent='Connected. Loading your cases...'; const r=await pullCloud(); fillCases(); renderAll(); m.textContent= r==='empty'?'Connected. No case file in Drive yet.':'Connected and your cases are loaded.'; }
+  catch(e){ relayOK=false; m.textContent='Could not connect: '+(e.message||e.code||'error'); }
+  renderSetup();
+};
+document.getElementById('relayPull').onclick=async()=>{
+  const m=document.getElementById('relayMsg'); m.textContent='Loading...';
+  try{ const r=await pullCloud(); fillCases(); renderAll(); m.textContent=r==='empty'?'No case file in Drive yet.':'Loaded.'; }catch(e){ m.textContent='Could not load: '+(e.message||e.code); }
+  renderSetup();
+};
+document.getElementById('dataShow').onclick=()=>{
+  const b=document.getElementById('dataBox'); b.style.display='block'; document.getElementById('dataSave').style.display='inline-block';
+  b.value=JSON.stringify({cases:serializeCases()},null,1);
+};
+document.getElementById('dataSave').onclick=()=>{
+  const m=document.getElementById('dataMsg');
+  try{ const o=JSON.parse(document.getElementById('dataBox').value); const list=o.cases||o;
+    if(!Array.isArray(list)||!list.length||!list.every(c=>c.id&&c.name)) throw new Error('Each case needs an id and a name.');
+    setCases(list); saveCasesLocal(); save(); fillCases(); renderAll(); m.textContent='Saved. It will sync to your Drive.'; }
+  catch(e){ m.textContent='Not saved: '+e.message; }
+};
+document.getElementById('dataCopy').onclick=async()=>{
+  const t=JSON.stringify({cases:serializeCases(), state:S},null,1);
+  try{ await navigator.clipboard.writeText(t); document.getElementById('dataMsg').textContent='Copied.'; }catch(e){ document.getElementById('dataMsg').textContent='Copy blocked.'; }
+};
+
+/* ===== Boot ===== */
+function boot(){ loadLocal(); applyFs(); fillCases(); renderAll(); resetIdle(); startSync(); }
+function showLock(){
+  const L=document.getElementById('lock'); L.style.display='flex'; const pin=document.getElementById('lockPin'); pin.focus();
+  const go=async()=>{ const m=document.getElementById('lockMsg'); m.textContent='Checking...';
+    try{ await vaultUnlock(pin.value); try{localStorage.removeItem(VTRY);}catch(e){} L.style.display='none'; pin.value=''; boot(); }
+    catch(e){ let n=0; try{ n=Number(localStorage.getItem(VTRY)||0)+1; localStorage.setItem(VTRY,String(n)); }catch(_){}
+      if(n>=10){ try{ localStorage.removeItem(VKEY); localStorage.removeItem(VTRY); }catch(_){} m.textContent='Too many wrong PINs. This device copy was erased. Reloading...'; setTimeout(()=>location.reload(),1500); }
+      else { m.textContent='Wrong PIN. '+(10-n)+' tries left.'; await new Promise(r=>setTimeout(r, Math.min(30000, 500*2**n))); } pin.value=''; } };
+  document.getElementById('lockGo').onclick=go; pin.onkeydown=e=>{ if(e.key==='Enter') go(); };
+}
+document.getElementById('pinSet').onclick=async()=>{ const p=document.getElementById('pinNew').value.trim(), m=document.getElementById('pinMsg');
+  if(!/^\d{6,}$/.test(p)){ m.textContent='Use 6 or more digits.'; return; }
+  if(!window.crypto||!crypto.subtle){ m.textContent='This browser cannot encrypt. Use Chrome over https.'; return; }
+  if(VS.on){ VS.salt=crypto.getRandomValues(new Uint8Array(16)); VS.key=await deriveKey(p,VS.salt); await VS.flush(); }
+  else await vaultEnable(p);
+  document.getElementById('pinNew').value=''; m.textContent='PIN lock is on. Everything on this device is encrypted.'; renderSetup(); resetIdle(); };
+document.getElementById('pinLockNow').onclick=()=>{ if(VS.on) lockNow(); else document.getElementById('pinMsg').textContent='Turn on PIN lock first.'; };
+let offArm=false; document.getElementById('pinOff').onclick=e=>{ if(!VS.on){ document.getElementById('pinMsg').textContent='PIN lock is already off.'; return; }
+  if(!offArm){ offArm=true; e.target.textContent='Tap again: stores data unencrypted'; setTimeout(()=>{offArm=false;e.target.textContent='Turn off PIN lock';},4000); return; }
+  vaultDisable(); offArm=false; e.target.textContent='Turn off PIN lock'; document.getElementById('pinMsg').textContent='PIN lock is off.'; renderSetup(); };
+if(vaultExists()) showLock(); else boot();
+if('serviceWorker' in navigator && location.protocol==='https:'){ navigator.serviceWorker.register('sw.js').catch(()=>{}); }
+function startSync(){ (async()=>{
+  if(!relayCfg().url){ setSync('Set up your relay in the Setup tab'); return; }
+  try{ await pullCloud(); fillCases(); renderAll(); setSync('Synced with your Drive'); }
+  catch(e){ setSync(navigator.onLine?'Saved on this device (relay not reached)':'Offline: saved on this device'); }
+})(); }
+</script>
+</body>
+</html>
