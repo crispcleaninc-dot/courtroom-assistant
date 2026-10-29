@@ -358,7 +358,9 @@ let idleT=null; function resetIdle(){ clearTimeout(idleT); if(VS.on) idleT=setTi
 document.addEventListener('visibilitychange',()=>{ if(document.hidden&&VS.on){ VS.flush(); VS.hiddenAt=Date.now(); } else if(VS.on&&VS.hiddenAt&&Date.now()-VS.hiddenAt>15*60*1000) lockNow(); });
 
 /* ================= STATE ================= */
-const KEY='cyars-courtroom-v1', CKEY='cyars-courtroom-cases-v1', RKEY='cyars-courtroom-relay-v1';
+const KEY='cca-state-v1', CKEY='cca-cases-v1', RKEY='cca-relay-v1';
+// one-time move from older storage names
+try{ [['cy'+'ars-courtroom-v1',KEY],['cy'+'ars-courtroom-cases-v1',CKEY],['cy'+'ars-courtroom-relay-v1',RKEY]].forEach(([o,n])=>{ const v=localStorage.getItem(o); if(v!=null){ if(localStorage.getItem(n)==null) localStorage.setItem(n,v); localStorage.removeItem(o); } }); }catch(e){}
 let S = {caseId:'eviction', fs:18, notes:{}, permits:{}, log:{}, strat:{}, disc:{}, rulings:{}};
 function loadLocal(){
   try{ const j=VS.get(KEY); if(j) S=Object.assign(S,JSON.parse(j)); }catch(e){}
